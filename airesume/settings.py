@@ -15,7 +15,11 @@ from dotenv import load_dotenv
 load_dotenv()  # Loads .env vars into os.environ
 
 from pathlib import Path
+import dj_database_url
 from decouple import config
+
+import environ
+env = environ.Env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -53,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'airesume.urls'
@@ -89,6 +94,10 @@ DATABASES = {
     }
 }
 
+
+
+DATABASES['default'] = dj_database_url.parse(env('DATABASE_URL'))
+ 
 # OpenRouter API
 OPENROUTER_API_KEY = config('OPENROUTER_API_KEY')
 SITE_URL = config('SITE_URL', default='http://localhost:8000')
