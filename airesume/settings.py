@@ -34,12 +34,12 @@ SECRET_KEY = 'django-insecure-3x_mz$3g=x@bg$_-8j=-=&7=1au3q7(@-usu@@9rq-c5hsc(%f
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['https://airesume-t087.onrender.com','airesume-t087.onrender.com']
 
 
 # Application definition
 
-INSTALLED_APPS = [
+INSTALLED_APPS = [ 
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
