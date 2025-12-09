@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Georgia, serif;
+            font-size: 11pt;
+            line-height: 1.7;
+            color: #222;
+            padding: 70px 60px;
+        }
+        .header { text-align: right; margin-bottom: 60px; font-size: 10pt; }
+        .salutation { margin: 40px 0 20px; }
+        .closing { margin-top: 60px; }
+        strong { font-weight: bold; }
+        em { font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {{ user.get_full_name|default:user.username }}<br>
+        {{ user.email }}<br>
+        {{ date }}
+    </div>
+
+    <p>Hiring Manager<br>{{ company_name }}</p>
+
+    <div class="salutation">Dear Hiring Manager,</div>
+
+    {{ cover_letter|safe }}
+
+    <div class="closing">
+        Sincerely,<br><br><br>
+        {{ user.get_full_name|default:user.username }}
+    </div>
+</body>
+</html>

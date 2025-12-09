@@ -1,0 +1,130 @@
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AiResume Panel {% block title %}{% endblock %}</title>
+    <link href="{% static 'admin/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="{% static 'admin/css/dashboard.css' %}" rel="stylesheet">
+</head>
+<body data-bs-theme="dark">
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold me-2" href="{% url 'resumecreate:admin_dashboard' %}">Admin Panel</a>
+            <button class="navbar-toggler d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <button class="btn btn-link text-white d-none d-lg-block" id="toggleSidebar">
+                <i class="bi bi-list"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Sidebar Offcanvas for Mobile -->
+    <div class="offcanvas offcanvas-start sidebar d-lg-none" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="sidebarOffcanvasLabel">Menu</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'resumecreate:admin_users' %}">
+                        <i class="bi bi-person-plus"></i>
+                        <span>Add User</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'resumecreate:admin_resumes' %}">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span>View Resumes</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'resumecreate:logout' %}">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Log Out</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Sidebar for Desktop -->
+    <div id="desktopSidebar" class="sidebar collapsed">  <!-- Added ID and class for JS toggle -->
+        {% include 'admin/partials/_sidebar.html' with active_page=active_page %}  <!-- Pass active_page for highlighting -->
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <div class="container-fluid py-4">
+            {% block content %}
+                <!-- Conditional includes based on view context (e.g., active_page) -->
+                {% if active_page == 'users' %}
+                    {% include 'admin/partials/_registeredusers.html' with users=registered_users %}
+                {% elif active_page == 'resumes' %}
+                    {% include 'admin/partials/_submitted_resumes.html' with resumes=submitted_resumes %}  <!-- Fixed filename assumption -->
+                {% else %}
+                    <!-- Default Dashboard Content -->
+                    <h1>Dashboard</h1>
+                    <p>Welcome to the AI Resume Admin Panel. Use the sidebar to navigate.</p>
+                    <!-- You can include mini summaries here if needed -->
+                {% endif %}
+            {% endblock %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sidebar Toggle for Desktop
+        document.getElementById('toggleSidebar').addEventListener('click', function() {
+            const sidebar = document.getElementById('desktopSidebar');
+            const mainContent = document.getElementById('mainContent');
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('sidebar-collapsed');
+            const icon = this.querySelector('i');
+            icon.classList.toggle('bi-list');
+            icon.classList.toggle('bi-x');
+        });
+
+        // Search Functionality for Users Table
+        document.getElementById('usersSearch')?.addEventListener('keyup', function() {  // Added null check for safety
+            const input = this.value.toLowerCase();
+            const table = document.getElementById('usersTable');
+            if (!table) return;
+            const rows = table.getElementsByTagName('tr');
+            for (let i = 1; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                let match = false;
+                for (let j = 0; j < cells.length - 1; j++) {  // Exclude actions column
+                    if (cells[j].textContent.toLowerCase().includes(input)) {
+                        match = true;
+                        break;
+                    }
+                }
+                rows[i].style.display = match ? '' : 'none';
+            }
+        });
+
+        // Search Functionality for Resumes Table
+        document.getElementById('resumesSearch')?.addEventListener('keyup', function() {
+            const input = this.value.toLowerCase();
+            const table = document.getElementById('resumesTable');
+            if (!table) return;
+            const rows = table.getElementsByTagName('tr');
+            for (let i = 1; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                let match = false;
+                for (let j = 0; j < cells.length - 1; j++) {  // Exclude actions column
+                    if (cells[j].textContent.toLowerCase().includes(input)) {
+                        match = true;
+                        break;
+                    }
+                }
+                rows[i].style.display = match ? '' : 'none';
+            }
+        });
+    </script>
+</body>
+</html>

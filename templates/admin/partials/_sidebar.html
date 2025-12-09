@@ -1,0 +1,45 @@
+<!-- {% load static %}
+ <div class="sidebar d-none d-lg-block" id="desktopSidebar">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-person-plus"></i>
+                    <span>Add User</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>View Resumes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Log Out</span>
+                </a>
+            </li>
+        </ul>
+</div> -->
+
+{% load static %}
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <a class="nav-link {% if active_page == 'users' %}active{% endif %}" href="{% url 'resumecreate:admin_users' %}">
+            <i class="bi bi-person-plus"></i>
+            <span>Add User</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if active_page == 'resumes' %}active{% endif %}" href="{% url 'resumecreate:admin_resumes' %}">
+            <i class="bi bi-file-earmark-text"></i>
+            <span>View Resumes</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'resumecreate:logout' %}">  <!-- <-- FIXED: Namespaced -->
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Log Out</span>
+        </a>
+    </li>
+</ul>

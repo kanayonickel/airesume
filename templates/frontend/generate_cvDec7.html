@@ -1,0 +1,393 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smartcv.ai | Generate CV</title>
+    <!-- Bootstrap 5 & Icons CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Playfair Display & Manrope Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Your Custom CSS -->
+    <link rel="stylesheet" href="{% static 'frontend/css/index.css' %}">
+    <link rel="stylesheet" href="{% static 'frontend/css/login.css' %}">
+    <link rel="stylesheet" href="{% static 'frontend/css/cv.css' %}">
+    <link rel="stylesheet" href="{% static 'frontend/css/cover.css' %}">
+    <link rel="stylesheet" href="{% static 'frontend/css/history.css' %}">
+</head>
+<body>
+    <header class="dash-header d-flex align-items-center justify-content-between px-4 py-3">
+        <a href="{% url 'resumecreate:index' %}" class="dash-logo font-playfair">Smartcv.ai</a>
+        <div class="dash-user">
+            <span class="avatar">{{ user_initials }}</span>
+        </div>
+    </header>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="d-flex align-items-center justify-content-between pb-3">
+                <span class="sidebar-brand font-playfair">Smartcv.ai</span>
+                <button id="sidebar-toggle" class="sidebar-toggle-btn btn btn-link" tabindex="0">
+                    <i class="bi bi-layout-sidebar-inset"></i>
+                </button>
+            </div>
+            <nav>
+                <ul class="sidebar-links list-unstyled mb-0">
+                    <li><a href="{% url 'resumecreate:generate_cv' %}" class="sidebar-link active"><i class="bi bi-file-earmark-plus"></i> <span>Create Resume</span></a></li>
+                    <li><a href="{% url 'resumecreate:generate_cover' %}" class="sidebar-link"><i class="bi bi-envelope"></i> <span>Generate Cover Letter</span></a></li>
+                    <li>
+                        <a href="{% url 'resumecreate:recommend_jobs' %}" class="sidebar-link {% if request.path == '/recommend-jobs/' %}active{% endif %}">
+                            <i class="bi bi-briefcase"></i> 
+                            <span>Recommend Jobs</span>
+                        </a>
+                    </li>
+
+                    <li><a href="#" class="sidebar-link"><i class="bi bi-link-45deg"></i> <span>Job Platform</span></a></li>
+                    <li><a href="{% url 'resumecreate:history' %}" class="sidebar-link"><i class="bi bi-journal-bookmark"></i> <span>History</span></a></li>
+                     <li>
+                        <a href="{% url 'resumecreate:logout' %}" class="sidebar-link">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span>Log Out</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="dash-main">
+            <div id="main-content">
+                <!-- Section: Template Picker -->
+                <section id="template-picker" {% if has_conversation %}class="d-none"{% endif %}>
+                    <h2 class="main-title font-playfair mb-1">Welcome! Let's build your perfect resume</h2>
+                    <p class="main-desc mb-4">Choose a template to begin</p>
+                    <div class="template-grid">
+                        {% for template in templates %}
+                            <img class="cv-template-img" src="{% static template.image %}" alt="{{ template.name }} Template" onclick="selectTemplate({{ template.id }})">
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <!-- Section: AI Chat View -->
+                <section id="ai-chat" {% if not has_conversation %}class="d-none"{% endif %}>
+                    <h2 class="ai-title font-playfair mb-2">Create Resume</h2>
+                    <p class="ai-desc mb-3">Answer the questions to complete your profile</p>
+                    
+                    <!-- Chat Container -->
+                    <div class="chat-container">
+                        <!-- Messages Area -->
+                        <div class="chat-messages" id="chatMessages">
+                            {% for message in ai_messages %}
+                                {% if message.is_user %}
+                                    <!-- User Message -->
+                                    <div class="chat-message user-msg">
+                                        <div class="msg-avatar user-avatar">{{ message.avatar }}</div>
+                                        <div class="msg-bubble user-bubble">
+                                            <p class="mb-0">{{ message.text }}</p>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <!-- AI Message -->
+                                    <div class="chat-message ai-msg">
+                                        <div class="msg-avatar ai-avatar">AI</div>
+                                        <div class="msg-bubble ai-bubble">
+                                            <p class="mb-0">{{ message.text }}</p>
+                                            
+                                            {% if message.show_actions %}
+                                                <div class="msg-actions">
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="chooseAction('improve')">
+                                                        <i class="bi bi-arrow-up-circle"></i> Improve Resume
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-success" onclick="chooseAction('fresh')">
+                                                        <i class="bi bi-file-earmark-plus"></i> Start Fresh
+                                                    </button>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Chat Input (Fixed at Bottom) -->
+                        <div class="chat-input-area">
+                            <form method="post" class="chat-form" id="chatForm">
+                                {% csrf_token %}
+                                <div class="input-group">
+                                    <button type="button" class="btn btn-light" title="Attach">
+                                        <i class="bi bi-paperclip"></i>
+                                    </button>
+                                    <!-- <input 
+                                        type="text" 
+                                        name="chat_input" 
+                                        class="form-control chat-input" 
+                                        placeholder="Type your answer here..."
+                                        autocomplete="off"
+                                        required> -->
+                                        <textarea 
+                                          name="chat_input" 
+                                          class="form-control chat-input" 
+                                          placeholder="Type your answer here..."
+                                          rows="1"
+                                          autocomplete="off"
+                                          required></textarea>
+
+
+                                    <button type="submit" class="btn btn-primary" title="Send">
+                                        <i class="bi bi-send-fill"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Progress Sidebar -->
+        <!-- <aside class="progress-nav p-4">
+            <h3 class="font-playfair mb-3">Progress Navigator</h3>
+            <div class="export-section mt-auto">
+                <label class="mb-2">Export as:</label>
+                <form method="post" class="mb-3">
+                    {% csrf_token %}
+                    <input type="radio" id="pdf" name="export" value="pdf" checked>
+                    <label for="pdf">PDF</label>
+                    <input type="radio" id="doc" name="export" value="doc">
+                    <label for="doc">Doc</label>
+                    <button type="submit" class="btn btn-outline-secondary w-100">Export New CV</button>
+                </form>
+            </div>
+        </aside> -->
+
+                <!-- Progress Sidebar -->
+              <aside class="progress-nav p-4">
+                  <h3 class="font-playfair mb-3">
+                      <i class="bi bi-bar-chart-steps me-2"></i>
+                      Resume Progress
+                  </h3>
+                  
+                  <!-- Progress Steps -->
+                  <div class="progress-steps mb-4">
+                      {% for step in steps %}
+                      <div class="step-item {% if forloop.counter <= current_step %}active{% endif %} mb-3">
+                          <div class="step-header d-flex align-items-center">
+                              <div class="step-icon me-2">
+                                  {% if forloop.counter < current_step %}
+                                  <i class="bi bi-check-circle-fill text-success"></i>
+                                  {% elif forloop.counter == current_step %}
+                                  <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                      <span class="visually-hidden">Loading...</span>
+                                  </div>
+                                  {% else %}
+                                  <i class="bi bi-circle text-muted"></i>
+                                  {% endif %}
+                              </div>
+                              <div class="step-info">
+                                  <h6 class="mb-0 fs-6">Step {{ forloop.counter }}</h6>
+                                  <small class="text-muted d-block">{{ step.title }}</small>
+                              </div>
+                          </div>
+                          {% if forloop.counter == current_step and step.description %}
+                          <div class="step-details mt-2 ms-4">
+                              <p class="small mb-0 text-primary">
+                                  <i class="bi bi-info-circle me-1"></i>
+                                  {{ step.description }}
+                              </p>
+                          </div>
+                          {% endif %}
+                      </div>
+                      {% endfor %}
+                  </div>
+                  
+                  <!-- Progress Bar -->
+                  <div class="progress-section mb-4">
+                      <div class="d-flex justify-content-between align-items-center mb-2">
+                          <span class="small text-muted">Completion</span>
+                          <span class="small fw-bold">{{ current_step }} of {{ total_steps }}</span>
+                      </div>
+                      <div class="progress" style="height: 8px;">
+                          <div class="progress-bar bg-primary" role="progressbar" 
+                              style="width: {{ progress_percentage }}%;"
+                              aria-valuenow="{{ progress_percentage }}" 
+                              aria-valuemin="0" 
+                              aria-valuemax="100">
+                          </div>
+                      </div>
+                      <div class="text-center mt-2">
+                          <small class="text-muted">{{ progress_percentage }}% Complete</small>
+                      </div>
+                  </div>
+                  
+                <!-- Current Section Info -->
+                  {% if current_step and steps and current_step <= steps|length %}
+                  <div class="current-section card border-primary mb-4">
+                      <div class="card-body py-3">
+                          <h6 class="card-title mb-2">
+                              <i class="bi bi-gear me-1"></i>
+                              {% with current_step_index=current_step|add:"-1" %}
+                              {% if steps.0.title %}
+                              Working On: {{ steps.0.title }}
+                              {% else %}
+                              Working On: Step {{ current_step }}
+                              {% endif %}
+                              {% endwith %}
+                          </h6>
+                          <p class="card-text small mb-0">
+                              {% with current_step_index=current_step|add:"-1" %}
+                              {% if steps.0.description %}
+                              {{ steps.0.description }}
+                              {% else %}
+                              Provide details about this resume section.
+                              {% endif %}
+                              {% endwith %}
+                          </p>
+                      </div>
+                  </div>
+                  {% endif %}
+                  
+                  <!-- Export Section -->
+                  <div class="export-section mt-auto">
+                      <label class="mb-2">Export as:</label>
+                      <div class="btn-group w-100 mb-3" role="group">
+                          <input type="radio" class="btn-check" name="export-format" id="pdf" autocomplete="off" checked>
+                          <label class="btn btn-outline-primary" for="pdf">
+                              <i class="bi bi-filetype-pdf"></i> PDF
+                          </label>
+                          <input type="radio" class="btn-check" name="export-format" id="doc" autocomplete="off">
+                          <label class="btn btn-outline-primary" for="doc">
+                              <i class="bi bi-filetype-doc"></i> DOC
+                          </label>
+                          <input type="radio" class="btn-check" name="export-format" id="txt" autocomplete="off">
+                          <label class="btn btn-outline-primary" for="txt">
+                              <i class="bi bi-filetype-txt"></i> TXT
+                          </label>
+                      </div>
+                    <button class="btn btn-primary w-100" onclick="exportResume()"
+                            {% if current_step < total_steps %}disabled title="Complete all steps first"{% endif %}>
+                        <i class="bi bi-download me-2"></i>
+                        Export Resume
+                    </button>
+                                          
+                      <!-- Reset Button -->
+                      <!-- <button class="btn btn-outline-danger w-100 mt-3" onclick="resetConversation()">
+                          <i class="bi bi-arrow-clockwise me-2"></i>
+                          Start Over
+                      </button> -->
+                       <button id="reset-btn" class="btn btn-outline-danger w-100 mt-3">
+                          <i class="bi bi-arrow-counterclockwise me-2"></i>
+                          Reset Conversation
+                      </button>
+                  </div>
+              </aside>
+
+        
+
+
+
+
+
+
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- MUST be loaded BEFORE these inline scripts o -->
+    <script src="{% static 'frontend/js/main.js' %}"></script>
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+    const textarea = document.querySelector(".chat-input");
+    const chatForm = document.getElementById("chatForm");
+
+    textarea.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+
+            // SHIFT + ENTER → add new line
+            if (e.shiftKey) {
+                return; // allow newline
+            }
+
+            // ENTER without SHIFT → submit
+            e.preventDefault();
+            chatForm.submit();
+        }
+    });
+
+    // Auto-expand textarea height
+    textarea.addEventListener("input", function () {
+        this.style.height = "auto";
+        this.style.height = this.scrollHeight + "px";
+    });
+});
+</script>
+
+<!-- <script>
+
+function resetConversation() {
+    if (!confirm("Are you sure you want to start over? All progress will be lost.")) return;
+
+    fetch("{% url 'resumecreate:reset_conversation' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/json"
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Clear chat UI dynamically
+            document.getElementById('chatMessages').innerHTML = '';
+            // Show template picker and hide AI chat
+            document.getElementById('template-picker').classList.remove('d-none');
+            document.getElementById('ai-chat').classList.add('d-none');
+        } else {
+            alert("Failed to reset conversation. Try again.");
+        }
+    })
+    .catch(err => {
+        console.error("Error resetting conversation:", err);
+        alert("Error resetting conversation. Try again.");
+    });
+}
+
+</script> -->
+
+<script>
+document.getElementById('reset-btn').addEventListener('click', function() {
+    if (!confirm("Are you sure you want to reset your conversation? This will delete your draft resume.")) return;
+
+    fetch("{% url 'resumecreate:reset_conversation' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/json"
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert("Failed to reset conversation. Try again.");
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Error resetting conversation.");
+    });
+});
+</script>
+
+
+<script>
+function exportResume() {
+    const format = document.querySelector('input[name="export-format"]:checked').id; // pdf/doc/txt
+    window.open(`{% url 'resumecreate:export_resume' %}?format=${format}`, "_blank");
+}
+</script>
+
+</body>
+</html>

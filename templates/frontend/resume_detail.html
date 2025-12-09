@@ -1,0 +1,25 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Smartcv.ai | Resume Detail</title>
+    <!-- Your Bootstrap/fonts/CSS links here (copy from history.html) -->
+</head>
+<body>
+    <h1>{{ resume.title }}</h1>
+    <p>Created: {{ resume.created_at|date:"M d, Y" }}</p>
+    <p>Status: {{ resume.status }}</p>
+    {% if resume.sections %}
+        <h2>Sections</h2>
+        <ul>
+            {% for section, content in resume.sections.items %}
+                <li><strong>{{ section|title }}:</strong> {{ content|join:", " }}</li>  <!-- Loops JSON array -->
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No sections yet—generate in builder!</p>
+    {% endif %}
+    <a href="{% url 'resumecreate:history' %}" class="btn btn-primary">Back to History</a>
+    <!-- JS links -->
+</body>
+</html>
